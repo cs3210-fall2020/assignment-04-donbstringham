@@ -13,6 +13,7 @@
 #define CMD_CP_STR "cp\n"
 #define CMD_RM_STR "rm\n"
 #define CMD_CAT_STR "cat\n"
+#define CMD_GSTATUS_STR "gstat\n"
 
 void init()
 {
@@ -56,10 +57,10 @@ int eoi()
     quit();
   }
 
-    // TODO Parse the user's input
-    // TODO Search for built-in command
-    // TODO Pass in arguments from input to the command function
-    // TODO Execute the command function. NOTE: Inform the user via output to stdout/stderr
+  // TODO Parse the user's input
+  // TODO Search for built-in command
+  // TODO Pass in arguments from input to the command function
+  // TODO Execute the command function. NOTE: Inform the user via output to stdout/stderr
 
   return 0;
 }
