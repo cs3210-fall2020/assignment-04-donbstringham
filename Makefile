@@ -10,7 +10,7 @@ BDIR=./bin
 
 # TARGETS
 bld: 
-	$(CC) $(CFLAGS) $(SDIR)/myshell.c -o $(BDIR)/mysh
+	$(CC) $(CFLAGS) $(SDIR)/myshell.c -o $(BDIR)/mysh -L/usr/local/Cellar/readline/8.0.4/lib
 
 run:
 	$(BDIR)/mysh

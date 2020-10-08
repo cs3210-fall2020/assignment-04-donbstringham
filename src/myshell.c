@@ -17,7 +17,6 @@
 
 void init()
 {
-  // clear();
   printf("+======================+\n");
   printf("|       04 - mysh      |\n");
   printf("+======================+\n");
@@ -31,7 +30,7 @@ void quit()
 {
   char ch;
 
-  printf("Are you sure (Y/N)? ");
+  printf(">Are you sure (Y/N)? ");
   ch = fgetc(stdin);
 
   if (ch == 'Y' || ch == 'y')
@@ -40,29 +39,26 @@ void quit()
   }
 }
 
-/**
- * eoi(): Get user's input from the keyboard
- */
-int eoi()
+int readStdin(char* str)
 {
-  int ret;
-  char buf[CMD_BUF_SIZE];
+  char* buf;
 
-  printf("what> ");
-  fgets(buf, CMD_BUF_SIZE - 1, stdin);
-  printf("    > %s", buf);
-
-  if (strcmp(buf, CMD_EXIT_STR) == 0)
-  {
-    quit();
+  buf = readline("\n>>>> ");
+  if (strlen(buf) == 0) {
+    add_history(buf);
+    strcpy(str, buf);
+    return 0;
   }
+  return 1;
 
-  // TODO Parse the user's input
-  // TODO Search for built-in command
-  // TODO Pass in arguments from input to the command function
-  // TODO Execute the command function. NOTE: Inform the user via output to stdout/stderr
 
-  return 0;
+}
+
+void printDir()
+{
+  char cwd[CMD_BUF_SIZE];
+  getcwd(cwd, sizeof(cwd));
+  printf("\ndir> %s", cwd);
 }
 
 /**
@@ -70,9 +66,20 @@ int eoi()
  */
 int main()
 {
+  char cmd[CMD_BUF_SIZE];
+
   init();
-  while (!eoi())
-  {
-    printf("    > thinking...\n");
+
+  while (1) {
+    printDir();
+    readStdin(cmd);
+    
+    if (strcmp(cmd, CMD_EXIT_STR) == 0) {
+      quit();
+    }
+  // TODO Parse the user's input
+  // TODO Search for built-in command
+  // TODO Pass in arguments from input to the command function
+  // TODO Execute the command function. NOTE: Inform the user via output to stdout/stderr
   }
 }
