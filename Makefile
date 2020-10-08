@@ -1,7 +1,6 @@
 # Author: Don Stringham <donstringham@weber.edu>
 .DEFAULT_GOAL=clean
 
-
 # VARIABLES
 CC=gcc
 BUILD_TIME ?= $(shell date +%FT%T%z)
@@ -10,11 +9,12 @@ ODIR=$(SDIR)
 BDIR=./bin
 
 # TARGETS
-bld: $(SDIR)/myshell.o
-	$(CC) $(CFLAGS) -o $(BDIR)
+bld: 
+	$(CC) $(CFLAGS) $(SDIR)/myshell.c -o $(BDIR)/mysh
 
 run:
-	$(BDIR)/myshell
+	$(BDIR)/mysh
+
 release:
 	git tag v$(V)
 	@read -p "Press enter to confirm and push to origin ..." && git push origin v$(V)
