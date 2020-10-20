@@ -1,3 +1,4 @@
+#include <dirent.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,13 +9,15 @@
 #include <readline/history.h>
 
 #define CMD_BUF_SIZE 1024
+#define CMD_ARGS_SIZE 2
+#define CMD_NUMBER 6
 #define CMD_EXIT_STR "exit"
 #define CMD_HELP_STR "help"
 #define CMD_LS_STR "ls"
 #define CMD_CP_STR "cp"
 #define CMD_RM_STR "rm"
 #define CMD_CAT_STR "cat"
-#define CMD_GSTATUS_STR "gstat"
+#define STR_SPACE " "
 
 void init()
 {
@@ -49,12 +52,118 @@ void showHelp()
   printf("+======================+");
   puts(
       "\nList of supported commands:"
+      "\n> cat"
       "\n> cd"
       "\n> ls"
+      "\n> rm"
       "\n> help"
       "\n> exit");
-
   return;
+}
+/**
+ * Built-in Command: CAT <filename>
+ */
+void cmdCat(char *filename)
+{
+  char ch;
+  FILE *fp;
+
+  printf(">>>>\n");
+
+  fp = fopen(filename, "r");
+  
+  if (fp == NULL)
+  {
+    printf(">>>> [ERROR] cannot open %s", filename);
+    return;
+  }
+
+  while ((ch = fgetc(fp)) != EOF)
+  {
+    putchar(ch);
+  }
+  fclose(fp);
+}
+/**
+ * Built-in Command: LS <dir>
+ */
+void cmdLs(char *dir)
+{
+  DIR *ds;
+
+  ds = opendir(dir);
+  if (ds == NULL)
+  {
+    printf(">>>> [ERROR] cannot open %s", dir);
+    return;
+  }
+
+  struct dirent *file_in_dir;
+
+  printf(">>>>\n");
+  while ((file_in_dir = readdir(ds)) != NULL)
+  {
+    printf(">>>> %s\n", file_in_dir->d_name);
+  }
+  closedir(ds);
+}
+/**
+ * Command Handler
+ */
+int cmdHandler(char *cmd, char **args)
+{
+  char builtInCommands[CMD_NUMBER][CMD_BUF_SIZE];
+  int switchCmdNum = 0;
+
+  printf("dc>> %s\n", cmd);
+  for (int i = 0; i < CMD_ARGS_SIZE - 1; i++)
+  {
+    printf("da>> %s\n", args[i]);
+  }
+
+  // Load the built-in command array
+  strcpy(builtInCommands[0], CMD_EXIT_STR);
+  strcpy(builtInCommands[1], CMD_HELP_STR);
+  strcpy(builtInCommands[2], CMD_CAT_STR);
+  strcpy(builtInCommands[3], CMD_CP_STR);
+  strcpy(builtInCommands[4], CMD_LS_STR);
+  strcpy(builtInCommands[5], CMD_RM_STR);
+
+  // Convert to integer for faster case processing
+  for (int i = 0; i < CMD_NUMBER; i++)
+  {
+    if (strcmp(cmd, builtInCommands[i]) == 0)
+    {
+      switchCmdNum = i + 1;
+      break;
+    }
+  }
+
+  switch (switchCmdNum)
+  {
+  case 1:
+    quit();
+    break;
+  case 2:
+    showHelp();
+    break;
+  case 3:
+    cmdCat(args[0]);
+    break;
+  case 4:
+    showHelp();
+    break;
+  case 5:
+    cmdLs(args[0]);
+    break;
+  case 6:
+    showHelp();
+    break;
+  default:
+    break;
+  }
+
+  return 0;
 }
 
 int readStdin(char *str)
@@ -74,11 +183,18 @@ int readStdin(char *str)
   return 1;
 }
 
-int parseStdin(char *cmd)
+void parseStdin(char *cmd, char **parsed_args)
 {
-  printf("\ncmd> %s\n", cmd);
+  int i = 0;
+  char *token = strtok(cmd, STR_SPACE);
 
-  return 1;
+  token = strtok(NULL, STR_SPACE);
+
+  while (token)
+  {
+    strcpy(parsed_args[i++], token);
+    token = strtok(NULL, STR_SPACE);
+  }
 }
 
 void printDir()
@@ -88,12 +204,20 @@ void printDir()
   printf("\ndir> %s", cwd);
 }
 
+void resetBuffers(char *cmd, char **parsed_args)
+{
+  strcpy(cmd, STR_SPACE);
+  strcpy(parsed_args[0], STR_SPACE);
+  strcpy(parsed_args[1], STR_SPACE);
+}
+
 /**
  * main(): applications entry point
  */
 int main()
 {
   char cmd[CMD_BUF_SIZE];
+  char *parsedArgs[CMD_ARGS_SIZE];
 
   init();
 
@@ -104,21 +228,11 @@ int main()
     {
       continue;
     }
-
     // Parse the user's input
-    int execFlg = parseStdin(cmd);
-
-    if (strcmp(cmd, CMD_HELP_STR) == 0)
-    {
-      showHelp();
-    }
-
-    if (strcmp(cmd, CMD_EXIT_STR) == 0)
-    {
-      quit();
-    }
-    // TODO Search for built-in command
-    // TODO Pass in arguments from input to the command function
-    // TODO Execute the command function. NOTE: Inform the user via output to stdout/stderr
+    parseStdin(cmd, parsedArgs);
+    // Handle all commands
+    cmdHandler(cmd, parsedArgs);
+    // Reset all the buffers
+    resetBuffers(cmd, parsedArgs);
   }
 }

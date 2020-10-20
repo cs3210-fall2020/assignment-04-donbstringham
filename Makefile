@@ -10,6 +10,7 @@ BDIR=./bin
 
 # TARGETS
 bld: 
+	[ -d $(BDIR) ] || mkdir -p $(BDIR) 
 	$(CC) $(CFLAGS) $(SDIR)/myshell.c -o $(BDIR)/mysh -lreadline
 run:
 	$(BDIR)/mysh
