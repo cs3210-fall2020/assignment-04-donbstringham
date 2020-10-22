@@ -34,7 +34,7 @@ void quit()
 {
   char ch;
 
-  printf(">>>> Are you sure (Y/N)? ");
+  printf(">>>> Are you sure (y/n)? ");
   ch = fgetc(stdin);
 
   if (ch == 'Y' || ch == 'y')
@@ -71,7 +71,7 @@ void cmdCat(char *filename)
   printf(">>>>\n");
 
   fp = fopen(filename, "r");
-  
+
   if (fp == NULL)
   {
     printf(">>>> [ERROR] cannot open %s", filename);
@@ -83,6 +83,25 @@ void cmdCat(char *filename)
     putchar(ch);
   }
   fclose(fp);
+}
+/**
+ * Built-in Command: CP <source> <destination>
+ */
+void cmdCp(char *src, char *dest)
+{
+  FILE *fpin;
+  FILE *fpout;
+  char ch;
+
+  fpin = fopen(src, "rb");
+  fpout = fopen(dest, "wb");
+
+  while ((ch = fgetc(fpin)) != EOF) {
+    fputc(ch, fpout);
+  }
+
+  fclose(fpout);
+  fclose(fpin);
 }
 /**
  * Built-in Command: LS <dir>
@@ -108,6 +127,33 @@ void cmdLs(char *dir)
   closedir(ds);
 }
 /**
+ * Built-in Command: RM <filename>
+ */
+void cmdRm(char *filename)
+{
+  char ch;
+  int retCode;
+
+  printf(">>>> Remove %s (y/n)? ", filename);
+  ch = fgetc(stdin);
+
+  if (ch == 'N' || ch == 'n')
+  {
+    return;
+  }
+
+  retCode = remove(filename);
+
+  if (retCode == 0)
+  {
+    printf(">>>> %s removed", filename);
+  }
+  else
+  {
+    printf(">>>> [ERROR] %s NOT removed", filename);
+  }
+}
+/**
  * Command Handler
  */
 int cmdHandler(char *cmd, char **args)
@@ -116,7 +162,7 @@ int cmdHandler(char *cmd, char **args)
   int switchCmdNum = 0;
 
   printf("dc>> %s\n", cmd);
-  for (int i = 0; i < CMD_ARGS_SIZE - 1; i++)
+  for (int i = 0; i < CMD_ARGS_SIZE; i++)
   {
     printf("da>> %s\n", args[i]);
   }
@@ -151,13 +197,13 @@ int cmdHandler(char *cmd, char **args)
     cmdCat(args[0]);
     break;
   case 4:
-    showHelp();
+    cmdCp(args[0], args[1]);
     break;
   case 5:
     cmdLs(args[0]);
     break;
   case 6:
-    showHelp();
+    cmdRm(args[0]);
     break;
   default:
     break;
