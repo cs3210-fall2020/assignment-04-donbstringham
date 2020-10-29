@@ -10,13 +10,15 @@
 
 #define CMD_BUF_SIZE 1024
 #define CMD_ARGS_SIZE 2
-#define CMD_NUMBER 6
+#define CMD_NUMBER 7
 #define CMD_EXIT_STR "exit"
 #define CMD_HELP_STR "help"
 #define CMD_LS_STR "ls"
 #define CMD_CP_STR "cp"
 #define CMD_RM_STR "rm"
 #define CMD_CAT_STR "cat"
+#define CMD_HIST_STR "hist"
+#define HISTORY_FILENAME ".history"
 #define STR_SPACE " "
 
 void init()
@@ -25,6 +27,7 @@ void init()
   printf("|       04 - mysh      |\n");
   printf("+======================+\n");
   printf("User: %s\n\n", getenv("USER"));
+  read_history(HISTORY_FILENAME);
 }
 
 /**
@@ -39,6 +42,7 @@ void quit()
 
   if (ch == 'Y' || ch == 'y')
   {
+    write_history(HISTORY_FILENAME);
     exit(0);
   }
 }
@@ -56,6 +60,7 @@ void showHelp()
       "\n> cd"
       "\n> ls"
       "\n> rm"
+      "\n> hist"
       "\n> help"
       "\n> exit");
   return;
@@ -96,7 +101,8 @@ void cmdCp(char *src, char *dest)
   fpin = fopen(src, "rb");
   fpout = fopen(dest, "wb");
 
-  while ((ch = fgetc(fpin)) != EOF) {
+  while ((ch = fgetc(fpin)) != EOF)
+  {
     fputc(ch, fpout);
   }
 
@@ -154,14 +160,29 @@ void cmdRm(char *filename)
   }
 }
 /**
+ * Built-in Command: HIST
+ */
+void cmdHist(void)
+{
+  HISTORY_STATE *histState = history_get_history_state();
+
+  printf(">>>> %d commands in history\n", histState->length);
+
+  for (int i = 0; i < histState->length; i++)
+  {
+    printf(">>>> %s\n", (char *)histState->entries[i]->line);
+  }
+}
+/**
  * Command Handler
  */
-int cmdHandler(char *cmd, char **args)
+int cmdHandler(char cmd[CMD_BUF_SIZE], char args[CMD_ARGS_SIZE][CMD_BUF_SIZE])
 {
   char builtInCommands[CMD_NUMBER][CMD_BUF_SIZE];
   int switchCmdNum = 0;
 
   printf("dc>> %s\n", cmd);
+
   for (int i = 0; i < CMD_ARGS_SIZE; i++)
   {
     printf("da>> %s\n", args[i]);
@@ -174,6 +195,7 @@ int cmdHandler(char *cmd, char **args)
   strcpy(builtInCommands[3], CMD_CP_STR);
   strcpy(builtInCommands[4], CMD_LS_STR);
   strcpy(builtInCommands[5], CMD_RM_STR);
+  strcpy(builtInCommands[6], CMD_HIST_STR);
 
   // Convert to integer for faster case processing
   for (int i = 0; i < CMD_NUMBER; i++)
@@ -205,6 +227,9 @@ int cmdHandler(char *cmd, char **args)
   case 6:
     cmdRm(args[0]);
     break;
+  case 7:
+    cmdHist();
+    break;
   default:
     break;
   }
@@ -214,23 +239,24 @@ int cmdHandler(char *cmd, char **args)
 
 int readStdin(char *str)
 {
-  char *buf;
+  char *buf = malloc(CMD_BUF_SIZE);
 
   buf = readline("\n>>>> ");
+  add_history(buf);
+  strcpy(str, buf);
+  free(buf);
 
-  if (strlen(buf) != 0)
+  if (strlen(str) != 0)
   {
-    add_history(buf);
-    strcpy(str, buf);
-
     return 0;
   }
 
   return 1;
 }
 
-void parseStdin(char *cmd, char **parsed_args)
+void parseStdin(char cmd[CMD_BUF_SIZE], char parsed_args[CMD_ARGS_SIZE][CMD_BUF_SIZE])
 {
+
   int i = 0;
   char *token = strtok(cmd, STR_SPACE);
 
@@ -250,11 +276,13 @@ void printDir()
   printf("\ndir> %s", cwd);
 }
 
-void resetBuffers(char *cmd, char **parsed_args)
+void resetBuffers(char cmd[CMD_BUF_SIZE], char parsed_args[CMD_ARGS_SIZE][CMD_BUF_SIZE])
 {
   strcpy(cmd, STR_SPACE);
-  strcpy(parsed_args[0], STR_SPACE);
-  strcpy(parsed_args[1], STR_SPACE);
+  for (int i = 0; i < CMD_NUMBER; i++)
+  {
+    strcpy(parsed_args[i], STR_SPACE);
+  }
 }
 
 /**
@@ -263,7 +291,7 @@ void resetBuffers(char *cmd, char **parsed_args)
 int main()
 {
   char cmd[CMD_BUF_SIZE];
-  char *parsedArgs[CMD_ARGS_SIZE];
+  char parsedArgs[CMD_ARGS_SIZE][CMD_BUF_SIZE];
 
   init();
 
